@@ -109,6 +109,7 @@
 </div>
 <input id="fileInput" type="file" accept="image/*" multiple hidden>
 <div id="modalRoot"></div><div class="toast" id="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const img = {
  mountain:'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=85',
@@ -165,7 +166,7 @@ function newWriting(id){const w=id?writings.find(x=>x.id===id):null;simpleModal(
 function newBook(id){const b=id?books.find(x=>x.id===id):null;simpleModal(b?'Edit book & add a favorite part':'Add a book to your shelf','<div class="field"><label for="bTitle">Book title</label><input id="bTitle" placeholder="Title" value="'+safe(b?.title||'')+'"></div><div class="field"><label for="bAuthor">Author</label><input id="bAuthor" placeholder="Author name" value="'+safe(b?.author||'')+'"></div><div class="field"><label for="bCoverFile">Book cover photo (optional)</label><input id="bCoverFile" type="file" accept="image/*" style="width:100%;border:1px solid #2a394c;background:#0a111a;color:var(--text);border-radius:11px;padding:10px">'+(b?.cover?'<img src="'+safe(b.cover)+'" alt="Current book cover" style="width:86px;height:116px;object-fit:cover;border-radius:9px;margin-top:8px">':'<p class="muted" style="font-size:11px">Choose a photo of the book cover from your phone.</p>')+'</div><div class="field"><label for="bStatus">Reading status</label><select id="bStatus" style="width:100%;background:#0a111a;border:1px solid #2a394c;border-radius:11px;color:var(--text);padding:12px"><option '+(!b||b.status==='Want to read'?'selected':'')+'>Want to read</option><option '+(b?.status==='Reading'?'selected':'')+'>Reading</option><option '+(b?.status==='Finished'?'selected':'')+'>Finished</option></select></div><div class="field"><label for="bNotes">Your thoughts about this book</label><textarea id="bNotes" placeholder="What did it make you think or feel?">'+safe(b?.notes||'')+'</textarea></div><div class="date-heading">Favorite parts from this book</div><p class="muted" style="font-size:12px">Add a photo of a page or passage and your thoughts. Each favorite part will stay inside this book.</p><div class="field"><label for="bPassageFile">Photo of a favorite page (optional)</label><input id="bPassageFile" type="file" accept="image/*" style="width:100%;border:1px solid #2a394c;background:#0a111a;color:var(--text);border-radius:11px;padding:10px"></div><div class="field"><label for="bPassagePage">Page number (optional)</label><input id="bPassagePage" placeholder="e.g. 42"></div><div class="field"><label for="bPassageThoughts">Why this part matters to you</label><textarea id="bPassageThoughts" placeholder="Write your thoughts about this passage…"></textarea></div>',b?'save-book-edit':'save-book',id)}
 function newQuote(){simpleModal('Save a favorite part','<p class="muted" style="font-size:12px">Upload a photo of a page or passage you love. Add a few words about why you chose it.</p><div class="field"><label for="qImageFile">Photo of the page / passage</label><input id="qImageFile" type="file" accept="image/*" style="width:100%;border:1px solid #2a394c;background:#0a111a;color:var(--text);border-radius:11px;padding:10px"></div><div class="field"><label for="qText">Your thoughts or the favorite lines (optional)</label><textarea id="qText" placeholder="What stood out to you? Why did this part matter?"></textarea></div><div class="field"><label for="qSource">Book title / author</label><input id="qSource" placeholder="Which book is this from?"></div><div class="field"><label for="qPage">Page number (optional)</label><input id="qPage" placeholder="e.g. 42"></div>','save-quote')}
 function newAlbum(){simpleModal('Create an album','<div class="field"><label for="aName">Album name</label><input id="aName" placeholder="e.g. Quiet places"></div><p class="muted" style="font-size:12px">You can assign photos to this album from their details.</p>','save-album')}
-function upload(){ $('#fileInput').click() }
+function upload(){if(!moonlitUser){showAccount();return}$('#fileInput').click()}
 function downloadPhoto(id){const p=photos.find(x=>x.id===id);if(!p)return;if(p.uploaded){const a=document.createElement('a');a.href=p.src;a.download=(p.title||'moonlit-photo')+'.jpg';a.click();return}fetch(p.src).then(r=>r.blob()).then(b=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=(p.title||'moonlit-photo')+'.jpg';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}).catch(()=>window.open(p.src,'_blank','noopener'))}
 function exportData(){const data={writings,books:books.map(b=>({...b,cover:undefined})),quotes:quotes.map(q=>({...q,image:undefined})),albums:albums.map(a=>a.name),photoNotes:photos.map(p=>({title:p.title,date:p.date,album:p.album,note:p.note,favorite:p.favorite}))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='moonlit-gallery-notes.json';a.click();URL.revokeObjectURL(url);toast('Your notes export has been prepared.')}
 document.addEventListener('click',e=>{
@@ -196,12 +197,69 @@ document.addEventListener('click',e=>{
 });
 $('#mainAction').addEventListener('click',()=>{if(activePage==='Photos'||activePage==='Favorites')upload();else if(activePage==='Albums')newAlbum();else if(activePage==="Writer's Corner")newWriting();else if(activePage==="Reader's Library")newBook();else if(activePage==='Quotes')newQuote();else if(activePage==='Settings')toast('Settings are being built in stages.');else toast('Choose a photo, note, book or quote to begin.')});
 $('#uploadBtn').addEventListener('click',upload);
-$('#fileInput').addEventListener('change',e=>{const files=[...e.target.files];files.forEach(file=>{if(!file.type.startsWith('image/'))return;const src=URL.createObjectURL(file);photos.unshift({id:'upload'+Date.now()+Math.random().toString(16).slice(2),title:file.name.replace(/\.[^.]+$/,'').replace(/[_-]/g,' '),src,date:new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}),album:'',note:'',favorite:false,uploaded:true})});e.target.value='';nav('Photos');toast(files.length+' image(s) added for this session. Uploads are not backed up yet.')});
+$('#fileInput').addEventListener('change',async e=>{const files=[...e.target.files];e.target.value='';if(!files.length)return;if(!window.moonlitClient||!moonlitUser){toast('Sign in before uploading photos.');showAccount();return}for(const file of files){if(!file.type.startsWith('image/'))continue;try{const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const path=moonlitUser.id+'/'+Date.now()+'-'+safeName;const {error}=await moonlitClient.storage.from('moonlit-photos').upload(path,file,{upsert:false,contentType:file.type});if(error)throw error}catch(err){toast('Upload failed: '+(err.message||'check Supabase setup'));return}}await loadCloudPhotos();toast(files.length+' photo(s) saved to your private cloud gallery.')});
 $('#globalSearch').addEventListener('input',e=>{searchTerm=e.target.value.trim();if(activePage!=='Photos'&&activePage!=='Favorites')activePage='Photos';render()});
 $('#enterBtn').addEventListener('click',()=>$('#welcome').classList.add('dismissed'));
 $('#welcomeAgain').addEventListener('click',()=>$('#welcome').classList.remove('dismissed'));
-$('#profileBtn').addEventListener('click',()=>{openModal('<div class="modal-head"><h2>Your personal space</h2><button class="icon-btn" data-action="close">✕</button></div><div class="moon-mini" style="margin-bottom:12px">☾</div><h3 style="margin:0">Welcome to Moonlit Gallery</h3><p class="muted">This is the visual prototype. A secure account and cloud sync will be connected in a later stage.</p><button class="secondary" style="width:100%" id="profileWelcome">Replay moon welcome</button>');const b=$('#profileWelcome');if(b)b.addEventListener('click',()=>{closeModal();$('#welcome').classList.remove('dismissed')})});
+$('#profileBtn').addEventListener('click',()=>showAccount());
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();$('#globalSearch').focus()}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-photo]')){e.preventDefault();openPhoto(e.target.dataset.photo)}});
+
+/* Supabase account and private cloud photo storage */
+let moonlitClient=null, moonlitUser=null;
+function configureSupabase(promptForConfig=false){
+ let url=localStorage.getItem('moonlit_supabase_url')||'',key=localStorage.getItem('moonlit_supabase_key')||'';
+ if((!url||!key)&&promptForConfig){
+  url=prompt('Paste your Supabase Project URL (Project Settings → API):');if(!url)return false;
+  key=prompt('Paste your Supabase publishable key (starts with sb_publishable_). Never use a secret/service_role key:');if(!key)return false;
+  url=url.trim().replace(/\/$/,'');key=key.trim();
+  if(!/^https:\/\/.+\.supabase\.co$/.test(url)||!key.startsWith('sb_publishable_')){toast('That URL or publishable key does not look right.');return false}
+  localStorage.setItem('moonlit_supabase_url',url);localStorage.setItem('moonlit_supabase_key',key);
+ }
+ if(!url||!key)return false;
+ if(!window.supabase?.createClient){toast('Cloud library could not load. Refresh and try again.');return false}
+ moonlitClient=window.supabase.createClient(url,key);return true;
+}
+function showAccount(){
+ if(!configureSupabase(true))return;
+ openModal('<div class="modal-head"><h2>'+(moonlitUser?'Your account':'Moonlit account')+'</h2><button class="icon-btn" data-action="close">✕</button></div>'+
+ (moonlitUser?'<p class="muted">Signed in as '+safe(moonlitUser.email||'your account')+'. Your cloud photos are private to this account.</p><button class="primary" id="cloudRefresh" style="width:100%">Refresh cloud photos</button><button class="secondary" id="cloudSignOut" style="width:100%;margin-top:9px">Sign out</button>':
+ '<p class="muted">Create an account, or sign in to open your own private gallery from any device.</p><div class="field"><label for="cloudEmail">Email</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="cloudPassword">Password</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div><button class="primary" id="cloudSignIn" style="width:100%">Sign in</button><button class="secondary" id="cloudSignUp" style="width:100%;margin-top:9px">Create account</button><p class="muted" style="font-size:11px;margin-top:12px">Use your own email. Never share your password with anyone.</p>'));
+ const signin=$('#cloudSignIn'),signup=$('#cloudSignUp'),out=$('#cloudSignOut'),refresh=$('#cloudRefresh');
+ if(signin)signin.onclick=()=>cloudAuth('signin');if(signup)signup.onclick=()=>cloudAuth('signup');
+ if(out)out.onclick=async()=>{await moonlitClient.auth.signOut();moonlitUser=null;closeModal();photos=seed.slice();render();toast('Signed out.')};
+ if(refresh)refresh.onclick=async()=>{await loadCloudPhotos();closeModal();render();toast('Cloud gallery refreshed.')};
+}
+async function cloudAuth(mode){
+ const email=$('#cloudEmail')?.value.trim(),password=$('#cloudPassword')?.value;
+ if(!email||!password){toast('Enter your email and password.');return}
+ if(password.length<6){toast('Use a password with at least 6 characters.');return}
+ const button=mode==='signup'?$('#cloudSignUp'):$('#cloudSignIn');
+ if(button){button.disabled=true;button.textContent='Please wait…'}
+ try{
+  const result=mode==='signup'?await moonlitClient.auth.signUp({email,password}):await moonlitClient.auth.signInWithPassword({email,password});
+  if(result.error)throw result.error;
+  if(mode==='signup'&&!result.data.session){toast('Account created. Check your email to confirm it, then sign in.');return}
+  moonlitUser=result.data.user||result.data.session?.user||null;closeModal();await loadCloudPhotos();toast('Signed in. Cloud photos are ready.');
+ }catch(err){toast(err.message||'Could not sign in.')}
+ finally{if(button){button.disabled=false;button.textContent=mode==='signup'?'Create account':'Sign in'}}
+}
+async function loadCloudPhotos(){
+ if(!moonlitClient||!moonlitUser)return;
+ const {data,error}=await moonlitClient.storage.from('moonlit-photos').list(moonlitUser.id,{limit:100,sortBy:{column:'created_at',order:'desc'}});
+ if(error){toast('Could not load cloud photos: '+error.message);return}
+ const cloud=[];
+ for(const f of (data||[])){if(!f.name||f.name==='.emptyFolderPlaceholder')continue;const path=moonlitUser.id+'/'+f.name;const {data:link,error:linkError}=await moonlitClient.storage.from('moonlit-photos').createSignedUrl(path,3600);if(linkError||!link)continue;cloud.push({id:'cloud-'+f.name,title:f.name.replace(/^\d+-/,'').replace(/\.[^.]+$/,'').replace(/[_-]/g,' '),src:link.signedUrl,date:f.created_at?new Date(f.created_at).toLocaleDateString():'Saved photo',album:'Cloud gallery',note:'',favorite:false,uploaded:true,cloudPath:path})}
+ photos=[...cloud,...seed];render();
+}
+async function initCloudAuth(){
+ if(!localStorage.getItem('moonlit_supabase_url')||!localStorage.getItem('moonlit_supabase_key'))return;
+ if(!configureSupabase(false))return;
+ const {data}=await moonlitClient.auth.getSession();moonlitUser=data.session?.user||null;
+ moonlitClient.auth.onAuthStateChange((_event,session)=>{moonlitUser=session?.user||null;setTimeout(()=>{if(moonlitUser)loadCloudPhotos();else{photos=seed.slice();render()}},0)});
+ if(moonlitUser)await loadCloudPhotos();
+}
+
+initCloudAuth();
 render();
 </script>
 </body>
