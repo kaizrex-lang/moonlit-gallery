@@ -135,6 +135,7 @@ document.addEventListener('click',e=>{
  const select=e.target.closest('[data-select]');if(select){e.stopPropagation();const id=select.dataset.select;selectedIds.has(id)?selectedIds.delete(id):selectedIds.add(id);render();return}
  const open=e.target.closest('[data-open]');if(open){openPhoto(open.dataset.open);return}
  const album=e.target.closest('[data-album]');if(album){const name=album.dataset.album;activePage='Photos';searchTerm='';render();$('#content').innerHTML='<div class="toolbar"><h2>'+safe(name)+'</h2><button class="secondary" data-nav="Albums">← All albums</button></div>'+photoSection(photos.filter(p=>p.album===name));$$('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav==='Albums'));return}
+ const viewBookBtn=e.target.closest('[data-view-book]');if(viewBookBtn){viewBook(viewBookBtn.dataset.viewBook);return}
  const editW=e.target.closest('[data-edit-writing]');if(editW){newWriting(editW.dataset.editWriting);return}
  const editB=e.target.closest('[data-edit-book]');if(editB){newBook(editB.dataset.editBook);return}
  const v=e.target.closest('[data-view]');if(v){viewMode=v.dataset.view;render();return}
