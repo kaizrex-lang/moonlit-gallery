@@ -137,7 +137,7 @@ const seed = [
  ['A quiet night',img.night,'Oct 5, 2026','Night skies','Some thoughts arrive only when everything grows quiet.'],
  ['The long way',img.road,'Oct 3, 2026','Travel','Not every beautiful thing needs to be reached quickly.']
 ].map((x,i)=>({id:'seed'+i,title:x[0],src:x[1],date:x[2],album:x[3],note:x[4],favorite:i===2||i===3,uploaded:false}));
-let photos=[...seed], albums=[{name:'Nature',cover:img.mountain},{name:'Travel',cover:img.temple},{name:'Night skies',cover:img.moon}], writings=[], books=[], quotes=[], activePage='Photos', searchTerm='', selectedPhoto=null, selectedIds=new Set(), viewMode='grid', toastTimer;
+let photos=[...seed], albums=[{name:'Nature',cover:img.mountain},{name:'Travel',cover:img.temple},{name:'Night skies',cover:img.moon}], writings=[], books=[], quotes=[], activePage='Photos', searchTerm='', selectedPhoto=null, selectedIds=new Set(), toastTimer;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
 function safe(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
