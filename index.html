@@ -207,6 +207,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.ke
 /* Supabase account and private cloud photo storage */
 let moonlitClient=null, moonlitUser=null;
 function configureSupabase(promptForConfig=false){
+ if(moonlitClient)return true;
  let url=localStorage.getItem('moonlit_supabase_url')||'',key=localStorage.getItem('moonlit_supabase_key')||'';
  if((!url||!key)&&promptForConfig){
   url=prompt('Paste your Supabase Project URL (Project Settings → API):');if(!url)return false;
