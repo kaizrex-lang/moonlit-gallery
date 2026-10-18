@@ -206,19 +206,13 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.ke
 
 /* Supabase account and private cloud photo storage */
 let moonlitClient=null, moonlitUser=null;
-function configureSupabase(promptForConfig=false){
+const MOONLIT_SUPABASE_URL='https://wtqfbhxqjnmdbtriqxig.supabase.co';
+const MOONLIT_SUPABASE_KEY='sb_publishable_2GscdPEraufX0n-SEJZ-iA_M-VJdIGF';
+function configureSupabase(){
  if(moonlitClient)return true;
- let url=localStorage.getItem('moonlit_supabase_url')||'',key=localStorage.getItem('moonlit_supabase_key')||'';
- if((!url||!key)&&promptForConfig){
-  url=prompt('Paste your Supabase Project URL (Project Settings → API):');if(!url)return false;
-  key=prompt('Paste your Supabase publishable key (starts with sb_publishable_). Never use a secret/service_role key:');if(!key)return false;
-  url=url.trim().replace(/\/$/,'');key=key.trim();
-  if(!/^https:\/\/.+\.supabase\.co$/.test(url)||!key.startsWith('sb_publishable_')){toast('That URL or publishable key does not look right.');return false}
-  localStorage.setItem('moonlit_supabase_url',url);localStorage.setItem('moonlit_supabase_key',key);
- }
- if(!url||!key)return false;
  if(!window.supabase?.createClient){toast('Cloud library could not load. Refresh and try again.');return false}
- moonlitClient=window.supabase.createClient(url,key);return true;
+ moonlitClient=window.supabase.createClient(MOONLIT_SUPABASE_URL,MOONLIT_SUPABASE_KEY);
+ return true;
 }
 function showAccount(){
  if(!configureSupabase(true))return;
@@ -253,8 +247,7 @@ async function loadCloudPhotos(){
  photos=[...cloud,...seed];render();
 }
 async function initCloudAuth(){
- if(!localStorage.getItem('moonlit_supabase_url')||!localStorage.getItem('moonlit_supabase_key'))return;
- if(!configureSupabase(false))return;
+ if(!configureSupabase())return;
  const {data}=await moonlitClient.auth.getSession();moonlitUser=data.session?.user||null;
  moonlitClient.auth.onAuthStateChange((_event,session)=>{moonlitUser=session?.user||null;setTimeout(()=>{if(moonlitUser)loadCloudPhotos();else{photos=seed.slice();render()}},0)});
  if(moonlitUser)await loadCloudPhotos();
