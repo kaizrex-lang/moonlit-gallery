@@ -358,7 +358,7 @@ async function cloudAuth(mode){
  finally{if(button){button.disabled=false;button.textContent=mode==='signup'?'Create account':'Sign in'}}
 }
 const MOONLIT_SHARED_STORAGE_LIMIT=1000000000;
-function formatStorageBytes(bytes){const n=Math.max(0,Number(bytes)||0);if(n<1000)return n+' B';if(n<1000000)return (n/1000).toFixed(n<10000?1:0)+' MB';if(n<1000000000)return (n/1000000).toFixed(n<10000000?2:1)+' GB';return (n/1000000000).toFixed(2)+' GB'}
+function formatStorageBytes(bytes){const n=Math.max(0,Number(bytes)||0);if(n<1000)return n+' B';if(n<1000000)return (n/1000).toFixed(n<10000?1:0)+' KB';if(n<1000000000)return (n/1000000).toFixed(n<10000000?2:1)+' MB';return (n/1000000000).toFixed(2)+' GB'}
 async function loadSharedStorageUsage(){
  const total=$('#sharedStorageTotal');if(!total)return;
  if(!moonlitClient||!moonlitUser){total.textContent='Sign in to view usage';$('#sharedStorageUsed').textContent='Sign-in required';$('#sharedStorageRemaining').textContent='';$('#sharedStorageNote').textContent='Sign in to request the shared storage total.';return}
